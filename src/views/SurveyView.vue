@@ -73,6 +73,25 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
+                    <h3 class="text-2xl font-semibold flex items-center justify-between">
+                        Questions
+                        <button type="button" @click="addQuestion()" class="flex items-center text-sm py-1 px-4 rounded-sm text-white bg-gray-600 hover:bg-gray-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" fill-rule="evendodd" clip-rule="evenodd" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Add question
+                        </button>
+                    </h3>
+                    <div v-if="!model.question.length" class="text-center text-gray-600">
+                        You don't have any questions created
+                    </div>
+                    <div v-for="(question, index) in model.question" :key="question.id">
+                        <QuestionEditor :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion" @deleteQuestion="deleteQuestion"/>
+                    </div>
+                </div>
+
                 <div class="px-4 py-3 bg-gray-50 text-right sm:px-6">
                     <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                         Save
