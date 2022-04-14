@@ -103,10 +103,12 @@ export default {
 
     function clickOnProfile(to) {
       if (to.name === 'Signout') {
-        store.commit('logout')
-        router.push({
-        name: 'Login'
-      })
+        store.dispatch('logout')
+          .then(() => {
+            router.push({
+              name: 'Login'
+            })
+          })
       } else {
         console.log('clicked', to);
       }
