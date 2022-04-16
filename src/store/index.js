@@ -12,7 +12,7 @@ const tmpSurveys = [
         created_at: '2022-04-14 11:05:00',
         updated_at: '2022-04-14 11:05:00',
         expire_date: '2022-04-30 11:05:00',
-        question: [
+        questions: [
             {
                 id: 1,
                 type: 'select',
@@ -177,7 +177,7 @@ const tmpSurveys = [
         created_at: '2022-04-14 11:05:00',
         updated_at: '2022-04-14 11:05:00',
         expire_date: '2022-04-30 11:05:00',
-        question: []
+        questions: []
     },
     {
         id: 300,
@@ -189,7 +189,7 @@ const tmpSurveys = [
         created_at: '2022-04-14 11:05:00',
         updated_at: '2022-04-14 11:05:00',
         expire_date: '2022-04-30 11:05:00',
-        question: []
+        questions: []
     },
     {
         id: 400,
@@ -201,7 +201,7 @@ const tmpSurveys = [
         created_at: '2022-04-14 11:05:00',
         updated_at: '2022-04-14 11:05:00',
         expire_date: '2022-04-30 11:05:00',
-        question: []
+        questions: []
     }
 ]
 
@@ -210,6 +210,10 @@ const store = createStore({
         user: {
             data: {},
             token: sessionStorage.getItem("TOKEN")
+        },
+        currentSurvey: {
+            loading: false,
+            data: {}
         },
         surveys: [...tmpSurveys],
         questionTypes: ['text', 'select', 'radio', 'checkbox', 'textarea'],
@@ -238,24 +242,36 @@ const store = createStore({
                 })
         },
         saveSurvey({ commit }, survey) {
+            delete survey.image_url
             let response;
 
             if (survey.id) {
-                response = axiosClient
-                    .put(`/survey/${survey.id}`, survey)
+                response = axiosClient.put(`/survey/${survey.id}`, survey)
                     .then((res) => {
-                        commit('updateSurvey', res.data)
+                        commit('setCurrentSurvey', res.data)
                         return res
                     })
             } else {
                 response = axiosClient.post('/survey', survey)
                     .then((res) => {
-                        commit('saveSurvey', res.data)
+                        commit('setCurrentSurvey', res.data)
                         return res
                     })
             }
 
             return response
+        },
+        getSurvey({ commit }, id) {
+            commit('setCurrentSurveyLoading', true)
+            return axiosClient.get(`/survey/${id}`)
+                .then((res) => {
+                    commit('setCurrentSurvey', res.data)
+                    commit('setCurrentSurveyLoading', false)
+                    return res
+                }).catch((err) => {
+                    commit('setCurrentSurveyLoading', false)
+                    throw err
+                })
         }
     },
     mutations: {
@@ -269,16 +285,11 @@ const store = createStore({
             state.user.token = userData.token,
             sessionStorage.setItem('TOKEN', userData.token)
         },
-        saveSurvey: (state, survey) => {
-            state.surveys = [...state.surveys, survey.data];
+        setCurrentSurveyLoading: (state, loading) => {
+            state.currentSurvey.loading = loading 
         },
-        updateSurvey: (state, survey) => {
-            state.surveys = state.surveys.map((s) => {
-                if (s.id == survey.data.id) {
-                    return survey.data
-                }
-                return s
-            })
+        setCurrentSurvey: (state, survey) => {
+            state.currentSurvey.data = survey.data
         }
     },
     modules: {}

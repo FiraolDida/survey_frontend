@@ -17,8 +17,8 @@
                         </label>
                         <div class="mt-1 flex items-center">
                             <img 
-                                v-if="model.image"
-                                :src="model.image"
+                                v-if="model.image_url"
+                                :src="model.image_url"
                                 :alt="model.title"
                                 class="w-64 h-48 object-cover"
                             />
@@ -28,7 +28,7 @@
                                 </svg>
                             </span>
                             <button type="button" class="relative overflow-hidden ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                <input type="file" class="absolute left-0 tio-0 right-0 bottom-0 opacity-0 cursor-pointer"/>
+                                <input type="file" @change="onImageChoose" class="absolute left-0 tio-0 right-0 bottom-0 opacity-0 cursor-pointer"/>
                                 Change
                             </button>
                         </div>
@@ -84,10 +84,10 @@
                             Add question
                         </button>
                     </h3>
-                    <div v-if="!model.question.length" class="text-center text-gray-600">
+                    <div v-if="!model.questions.length" class="text-center text-gray-600">
                         You don't have any questions created
                     </div>
-                    <div v-for="(question, index) in model.question" :key="question.id">
+                    <div v-for="(question, index) in model.questions" :key="question.id">
                         <QuestionEditorVue :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion" @deleteQuestion="deleteQuestion"/>
                     </div>
                 </div>
@@ -105,7 +105,7 @@
 <script setup>
 import PageComponentVue from '../components/PageComponent.vue';
 import QuestionEditorVue from '../components/editor/QuestionEditor.vue';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import store from '../store';
 import { useRoute, useRouter } from 'vue-router'
 import { v4 as uuidv4 } from 'uuid'
@@ -117,15 +117,24 @@ let model = ref ({
     title: '',
     status: false,
     description: null,
-    image: null,
+    image_url: null,
     expire_date: null,
-    question: []
+    questions: []
 })
 
+watch(
+    () => store.state.currentSurvey.data,
+    (newVal, oldVal) => {
+        console.log(newVal);
+        model.value = {
+            ...JSON.parse(JSON.stringify(newVal)),
+            status: newVal.status !== "draft"
+        }
+    }
+)
+
 if (route.params.id) {
-    model.value = store.state.surveys.find(
-        (s) => s.id === parseInt(route.params.id)
-    );
+    store.dispatch('getSurvey', route.params.id)
 }
 
 function addQuestion(index) {
@@ -164,6 +173,17 @@ function saveSurvey() {
             }
         })
     })
+}
+
+function onImageChoose(ev) {
+    const file = ev.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+        model.value.image = reader.result
+        model.value.image_url = reader.result
+    }
+    reader.readAsDataURL(file)
 }
 
 </script>
