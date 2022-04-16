@@ -159,17 +159,17 @@ function addQuestion(index) {
         data: {}
     };
 
-    model.value.question.splice(index, 0, newQuestion)
+    model.value.questions.splice(index, 0, newQuestion)
 }
 
 function deleteQuestion(question) {
-    model.value.question = model.value.question.filter(
+    model.value.questions = model.value.questions.filter(
         (q) => q !== question
     )
 }
 
 function questionChange(question) {
-    model.value.question = model.value.question.map((q) => {
+    model.value.questions = model.value.questions.map((q) => {
         if (q.id === question.id) {
             return JSON.parse(JSON.stringify(question))
         }
