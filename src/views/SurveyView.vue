@@ -3,11 +3,16 @@
         <template v-slot:header>
             <div class="flex items-center justify-between">
                 <h1 class="text-3xl font-bold text-gray-900">
-                    {{ model.id ? model.title : 'Create a Survey' }}
+                    {{ route.params.id ? model.title : 'Create a Survey' }}
                 </h1>
             </div>
         </template>
-        <form @submit.prevent="saveSurvey">
+
+        <div v-if="surveyLoading" class="flex justify-center">
+            Loading...
+        </div>
+
+        <form v-else @submit.prevent="saveSurvey">
             <div class="shadow sm:rounded-md sm:overflow-hidden">
                 <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
                     <!-- image -->
@@ -105,13 +110,14 @@
 <script setup>
 import PageComponentVue from '../components/PageComponent.vue';
 import QuestionEditorVue from '../components/editor/QuestionEditor.vue';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import store from '../store';
 import { useRoute, useRouter } from 'vue-router'
 import { v4 as uuidv4 } from 'uuid'
 
 const route =  useRoute()
 const router = useRouter()
+const surveyLoading = computed(() => store.state.currentSurvey.loading)
 
 let model = ref ({
     title: '',
