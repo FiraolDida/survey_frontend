@@ -3,11 +3,23 @@
         <template v-slot:header>
             <div class="flex items-center justify-between">
                 <h1 class="text-3xl font-bold text-gray-900">
-                    {{ model.id ? model.title : 'Create a Survey' }}
+                    {{ route.params.id ? model.title : 'Create a Survey' }}
                 </h1>
+
+                <button v-if="route.params.id" type="button" @click="deleteSurvey()" class="py-2 px-3 text-white bg-red-500 rounded-md hover:bg-red-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 -mt-1 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" fill-rule="evenodd" clip-rule="evenodd" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Survey
+                </button>
             </div>
         </template>
-        <form @submit.prevent="saveSurvey">
+
+        <div v-if="surveyLoading" class="flex justify-center">
+            Loading...
+        </div>
+
+        <form v-else @submit.prevent="saveSurvey">
             <div class="shadow sm:rounded-md sm:overflow-hidden">
                 <div class="px-4 py-5 bg-white space-y-6 sm:p-6">
                     <!-- image -->
@@ -17,8 +29,8 @@
                         </label>
                         <div class="mt-1 flex items-center">
                             <img 
-                                v-if="model.image"
-                                :src="model.image"
+                                v-if="model.image_url"
+                                :src="model.image_url"
                                 :alt="model.title"
                                 class="w-64 h-48 object-cover"
                             />
@@ -28,7 +40,7 @@
                                 </svg>
                             </span>
                             <button type="button" class="relative overflow-hidden ml-5 bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                <input type="file" class="absolute left-0 tio-0 right-0 bottom-0 opacity-0 cursor-pointer"/>
+                                <input type="file" @change="onImageChoose" class="absolute left-0 tio-0 right-0 bottom-0 opacity-0 cursor-pointer"/>
                                 Change
                             </button>
                         </div>
@@ -84,10 +96,10 @@
                             Add question
                         </button>
                     </h3>
-                    <div v-if="!model.question.length" class="text-center text-gray-600">
+                    <div v-if="!model.questions.length" class="text-center text-gray-600">
                         You don't have any questions created
                     </div>
-                    <div v-for="(question, index) in model.question" :key="question.id">
+                    <div v-for="(question, index) in model.questions" :key="question.id">
                         <QuestionEditorVue :question="question" :index="index" @change="questionChange" @addQuestion="addQuestion" @deleteQuestion="deleteQuestion"/>
                     </div>
                 </div>
@@ -105,26 +117,98 @@
 <script setup>
 import PageComponentVue from '../components/PageComponent.vue';
 import QuestionEditorVue from '../components/editor/QuestionEditor.vue';
-import { ref } from 'vue';
+import { ref, watch, computed } from 'vue';
 import store from '../store';
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { v4 as uuidv4 } from 'uuid'
 
 const route =  useRoute()
+const router = useRouter()
+const surveyLoading = computed(() => store.state.currentSurvey.loading)
 
 let model = ref ({
     title: '',
     status: false,
     description: null,
-    image: null,
+    image_url: null,
     expire_date: null,
-    question: []
+    questions: []
 })
 
+watch(
+    () => store.state.currentSurvey.data,
+    (newVal, oldVal) => {
+        console.log(newVal);
+        model.value = {
+            ...JSON.parse(JSON.stringify(newVal)),
+            status: newVal.status !== "draft"
+        }
+    }
+)
+
 if (route.params.id) {
-    model.value = store.state.surveys.find(
-        (s) => s.id === parseInt(route.params.id)
-    );
+    store.dispatch('getSurvey', route.params.id)
 }
+
+function addQuestion(index) {
+    const newQuestion = {
+        id: uuidv4(),
+        type: 'text',
+        question: '',
+        description: null,
+        data: {}
+    };
+
+    model.value.questions.splice(index, 0, newQuestion)
+}
+
+function deleteQuestion(question) {
+    model.value.questions = model.value.questions.filter(
+        (q) => q !== question
+    )
+}
+
+function questionChange(question) {
+    model.value.questions = model.value.questions.map((q) => {
+        if (q.id === question.id) {
+            return JSON.parse(JSON.stringify(question))
+        }
+        return q
+    })
+}
+
+function saveSurvey() {
+    store.dispatch('saveSurvey', model.value).then(({ data }) => {
+        router.push({
+            name: 'SurveyView',
+            params: {
+                id: data.data.id
+            }
+        })
+    })
+}
+
+function onImageChoose(ev) {
+    const file = ev.target.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = () => {
+        model.value.image = reader.result
+        model.value.image_url = reader.result
+    }
+    reader.readAsDataURL(file)
+}
+
+function deleteSurvey() {
+    if (confirm(`Are you sure you want to delete this survey? Operations can't be undone.`)) {
+        store.dispatch('deleteSurvey', model.value.id).then(() => {
+            router.push({
+                name: 'Surveys'
+            })
+        })
+    }
+}
+
 </script>
 
 <style>
