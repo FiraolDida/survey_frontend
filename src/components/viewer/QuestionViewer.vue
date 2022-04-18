@@ -21,7 +21,7 @@
             </div>
             <div v-else-if="question.type === 'radio'">
                 <div v-for="(option, ind) of question.data.options" :key="option.uuid" class="flex items-center">
-                    <input :id="option.uuid" :name="'question' + question.id" :value="option.text" @change="onCheckboxChange" type="radio"
+                    <input :id="option.uuid" :name="'question' + question.id" :value="option.text" @change="emits('update:modelValue', $event.target.value)" type="radio"
                         class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300" />
                     <label :for="option.uuid" class="ml-3 block text-sm font-medium text-gray-700">
                         {{ option.text }}
@@ -30,7 +30,7 @@
             </div>
             <div v-else-if="question.type === 'checkbox'">
                 <div v-for="(option, ind) of question.data.options" :key="option.uuid" class="flex items-center">
-                    <input :id="option.uuid" v-model="model[option.text]" @change="emits('update:modelValue', $event.target.value)" type="checkbox"
+                    <input :id="option.uuid" v-model="model[option.text]" @change="onCheckboxChange" type="checkbox"
                         class="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" />
                     <label :for="option.uuid" class="ml-3 block text-sm font-medium text-gray-700">
                         {{ option.text }}
@@ -63,6 +63,16 @@ let model;
 
 if (question.type === 'checkbox') {
     model = ref({})
+}
+
+function onCheckboxChange($event) {
+    const selectedOptions = [];
+    for (let text in model.value) {
+        if (model.value[text]) {
+            selectedOptions.push(text);
+        }
+    }
+    emits('update:modelValue', selectedOptions);
 }
 </script>
 
