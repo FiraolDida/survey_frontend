@@ -59,7 +59,7 @@ store.dispatch('getSurveyBySlug', route.params.slug);
 
 function submitSurvey() {
     console.log(JSON.stringify(answers.value, undefined, 2));
-    store.dispatch('saveSurveyAnswers', {
+    store.dispatch('saveSurveyAnswer', {
         surveyId: survey.value.id,
         answers: answers.value,
     }).then((response) => {

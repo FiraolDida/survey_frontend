@@ -101,6 +101,9 @@ const store = createStore({
                     commit('setCurrentSurveyLoading', false);
                     throw err;
                 })
+        },
+        saveSurveyAnswer({ commit }, { surveyId, answers}) {
+            return axiosClient.post(`/survey/${surveyId}/answer`, {answers})
         }
     },
     mutations: {
