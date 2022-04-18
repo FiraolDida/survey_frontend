@@ -21,6 +21,10 @@ const store = createStore({
             show: false,
             type: null,
             message: null
+        },
+        dashboard: {
+            loading: false,
+            data: {}
         }
     },
     getters: {},
@@ -104,6 +108,18 @@ const store = createStore({
         },
         saveSurveyAnswer({ commit }, { surveyId, answers}) {
             return axiosClient.post(`/survey/${surveyId}/answer`, {answers})
+        },
+        getDashboardData({ commit }){
+            commit('dashboardLoading', true);
+            return axiosClient.get(`/dashboard`)
+                .then((res) => {
+                    commit('dashboardLoading', false);
+                    commit('setDashboardData', res.data);
+                    return res;
+                }).catch((err) => {
+                    commit('dashboardLoading', false);
+                    throw err;
+                })
         }
     },
     mutations: {
@@ -138,6 +154,12 @@ const store = createStore({
             setTimeout(() => {
                 state.notification.show = false
             }, 3000);
+        },
+        dashboardLoading: (state, loading) => {
+            state.dashboard.loading = loading;
+        },
+        setDashboardData: (state, data) => {
+            state.dashboard.data = data;
         }
     },
     modules: {}
